@@ -42,6 +42,9 @@ def print_and_log(logger, severity, message):
 
 
 def write_data_to_file(response, iteration, logger, timestamp):
+        '''
+        Outputs the downloaded data as a JSON file. Prints and logs outcomes and defines the total_results variable, which is used for the download pagination
+        '''
         #error if there's an HTTP error
         data = response.json()
 
