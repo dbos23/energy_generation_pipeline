@@ -47,6 +47,7 @@ while (offset < total_results) and (current_attempt < max_attempts):
     try:
         #download data
         response = requests.get(url, params=params)
+        response.raise_for_status()
 
         #write data to file
         modules.write_data_to_file(response, iteration, logger, current_timestamp_str)

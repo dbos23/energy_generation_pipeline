@@ -43,7 +43,6 @@ def print_and_log(logger, severity, message):
 
 def write_data_to_file(response, iteration, logger, timestamp):
         #error if there's an HTTP error
-        response.raise_for_status()
         data = response.json()
 
         #set total_results to its true value. print and log the proportion of results downloaded
