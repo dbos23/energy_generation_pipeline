@@ -26,7 +26,7 @@ iteration = 0
 offset = 0
 total_results = 100000 #setting this arbitrarily at first to make sure at least one download always runs
 
-logger.info('Starting downloads')
+modules.print_and_log(logger, 'info', 'Starting downloads')
 
 while offset < total_results:
     #define download parameters
@@ -46,8 +46,7 @@ while offset < total_results:
     #set total_results to its true value. print the proportion of results downloaded
     total_results = int(data['response']['total'])
     results_downloaded = (5000 * iteration) + 5000
-    print(f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
-    logger.info(f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
+    modules.print_and_log(logger, 'info', f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
 
     #write results to file
     output_file_name = current_timestamp_str + '_' + str(iteration) + '.json'
@@ -55,12 +54,10 @@ while offset < total_results:
     with open(f'data/{output_file_name}', 'w') as json_file:
         json.dump(data, json_file)
 
-    print(f'File {iteration} written to {output_file_name}')
-    logger.info(f'File {iteration} written to {output_file_name}')
+    modules.print_and_log(logger, 'info', f'File {iteration} written to {output_file_name}')
 
     #increment variables. we'll have to paginate the downloads to get them all since one download is limited to 5000 results
     iteration += 1
     offset += 5000
 
-print('All results downloaded')
-logger.info('All results downloaded')
+modules.print_and_log(logger, 'info', 'All results downloaded')
