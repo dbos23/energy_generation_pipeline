@@ -3,6 +3,16 @@ import os
 from dotenv import load_dotenv
 import json
 from datetime import datetime
+import modules
+
+#create directories for output data and logs. create timestamp for output file names
+for dir in ['data', 'logs']:
+    os.makedirs(dir, exist_ok=True)
+current_timestamp = datetime.now()
+current_timestamp_str = current_timestamp.strftime('%Y-%m-%d_%H-%M-%S')
+
+#set up logging
+logger = modules.make_logger(timestamp=current_timestamp_str)
 
 #load api key
 load_dotenv()
@@ -11,15 +21,12 @@ api_key = os.getenv('api_key')
 #define url for download
 url = 'https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/'
 
-#create directory for output data and timestamp for output file names
-os.makedirs('data', exist_ok=True)
-current_timestamp = datetime.now()
-current_timestamp_str = current_timestamp.strftime('%Y-%m-%d_%H-%M-%S')
-
 #the results will be paginated. these variables will account for that pagination
 iteration = 0
 offset = 0
 total_results = 100000 #setting this arbitrarily at first to make sure at least one download always runs
+
+logger.info('Starting downloads')
 
 while offset < total_results:
     #define download parameters
@@ -40,6 +47,7 @@ while offset < total_results:
     total_results = int(data['response']['total'])
     results_downloaded = (5000 * iteration) + 5000
     print(f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
+    logger.info(f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
 
     #write results to file
     output_file_name = current_timestamp_str + '_' + str(iteration) + '.json'
@@ -48,7 +56,11 @@ while offset < total_results:
         json.dump(data, json_file)
 
     print(f'File {iteration} written to {output_file_name}')
+    logger.info(f'File {iteration} written to {output_file_name}')
 
     #increment variables. we'll have to paginate the downloads to get them all since one download is limited to 5000 results
     iteration += 1
     offset += 5000
+
+print('All results downloaded')
+logger.info('All results downloaded')
