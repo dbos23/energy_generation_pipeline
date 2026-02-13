@@ -1,4 +1,9 @@
 import logging
+import requests
+import json
+
+
+
 
 def make_logger(timestamp):
     '''
@@ -13,6 +18,9 @@ def make_logger(timestamp):
         filename=log_filepath
     )
     return logging.getLogger()
+
+
+
 
 def print_and_log(logger, severity, message):
     '''
@@ -29,3 +37,24 @@ def print_and_log(logger, severity, message):
         logger.error(message)
     elif severity == 'critical':
         logger.critical(message)
+
+
+
+
+def write_data_to_file(response, iteration, logger, timestamp):
+        #error if there's an HTTP error
+        response.raise_for_status()
+        data = response.json()
+
+        #set total_results to its true value. print and log the proportion of results downloaded
+        total_results = int(data['response']['total'])
+        results_downloaded = (5000 * iteration) + 5000
+        print_and_log(logger, 'info', f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
+
+        #write results to file
+        output_file_name = timestamp + '_' + str(iteration) + '.json'
+
+        with open(f'data/{output_file_name}', 'w') as json_file:
+            json.dump(data, json_file)
+
+        print_and_log(logger, 'info', f'File {iteration} written to {output_file_name}')
