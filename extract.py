@@ -28,18 +28,27 @@ while offset < total_results:
         'frequency': 'daily',
         'data[0]': 'value',
         'offset': offset,
-        'length': 5000
+        'length': 5000,
+        'facets[respondent][]': 'NY' #filtering to New York only
     }
 
-    #download results and write to file
+    #download results
     response = requests.get(url, params=params)
     data = response.json()
+
+    #set total_results to its true value. print the proportion of results downloaded
+    total_results = int(data['response']['total'])
+    results_downloaded = (5000 * iteration) + 5000
+    print(f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
+
+    #write results to file
     output_file_name = current_timestamp_str + '_' + str(iteration) + '.json'
 
     with open(f'data/{output_file_name}', 'w') as json_file:
         json.dump(data, json_file)
 
-    #increment variables and set the total_results variable to its true value. we'll have to paginate the downloads to get them all since one download is limited to 5000
+    print(f'File {iteration} written to {output_file_name}')
+
+    #increment variables. we'll have to paginate the downloads to get them all since one download is limited to 5000 results
     iteration += 1
     offset += 5000
-    total_results = int(data['response']['total'])
