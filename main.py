@@ -1,9 +1,11 @@
-import requests
 import os
+import sys
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+import boto3
+import requests
+import json
 import modules
-import sys
 
 #create directories for output data and logs if they don't already exist
 for dir in ['data', 'logs']:
@@ -13,8 +15,11 @@ for dir in ['data', 'logs']:
 current_timestamp = datetime.now()
 current_timestamp_str = current_timestamp.strftime('%Y-%m-%d_%H-%M-%S')
 
-#set variables to use for download
+#load environment variables, set variables to use for download
 load_dotenv()
+aws_access_key = os.getenv('aws_access_key')
+aws_secret_key = os.getenv('aws_secret_key')
+s3_bucket_name = os.getenv('s3_bucket_name')
 api_key = os.getenv('api_key')
 url = 'https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/'
 download_date = str(current_timestamp - timedelta(days=1))[:10] #yesterday's date
@@ -26,6 +31,14 @@ total_results = 100000 #setting this arbitrarily at first to make sure at least 
 
 #set up logging
 logger = modules.make_logger(timestamp=current_timestamp_str)
+
+#connect to s3
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=aws_access_key,
+    aws_secret_access_key=aws_secret_key
+)
+
 modules.print_and_log(logger, 'info', 'Starting downloads')
 
 #only continue downloading while there are results left to download and the max attempts haven't been reached
@@ -47,12 +60,13 @@ while (offset < total_results) and (current_attempt < max_attempts):
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
+        json_string = json.dumps(data)
 
         #set total_results to its true value
         total_results = int(data['response']['total'])
 
-        #write data to file
-        modules.write_data_to_file(data, total_results, iteration, logger, current_timestamp_str)
+        #upload json data to s3 bucket
+        modules.upload_to_s3(json_string, total_results, iteration, logger, current_timestamp_str, s3_client, s3_bucket_name)
 
         #increment variables. we may have to paginate the downloads to get everything since one download is limited to 5000 results
         iteration += 1

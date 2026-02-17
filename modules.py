@@ -40,9 +40,9 @@ def print_and_log(logger, severity, message):
 
 
 
-def write_data_to_file(data, total_results, iteration, logger, timestamp):
+def upload_to_s3(json_string, total_results, iteration, logger, timestamp, client, s3_bucket_name):
         '''
-        Outputs the downloaded data locally as a JSON file. Prints and logs outcomes
+        Uploads the downloaded data to the selected S3 bucket as a JSON file. Prints and logs outcomes
         '''
         #print and log the proportion of results downloaded
         results_downloaded = (5000 * iteration) + 5000
@@ -51,10 +51,8 @@ def write_data_to_file(data, total_results, iteration, logger, timestamp):
 
         print_and_log(logger, 'info', f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
 
-        #write results to file
+        #upload results to s3
         output_file_name = timestamp + '_' + str(iteration) + '.json'
+        client.put_object(Body=json_string, Bucket=s3_bucket_name, Key=output_file_name)
 
-        with open(f'data/{output_file_name}', 'w') as json_file:
-            json.dump(data, json_file)
-
-        print_and_log(logger, 'info', f'File {iteration} written to {output_file_name}')
+        print_and_log(logger, 'info', f'File {iteration} written to S3 at {s3_bucket_name}/{output_file_name}')
