@@ -54,7 +54,7 @@ def upload_to_s3(json_string, total_results, iteration, logger, timestamp, clien
 
         try:
             client.put_object(Body=json_string, Bucket=s3_bucket_name, Key=output_file_name)
-            print_and_log(logger, 'info', f'File {iteration} written to S3 at {s3_bucket_name}/{output_file_name}')
+            print_and_log(logger, 'info', f'File {iteration} written to s3://{s3_bucket_name}/{output_file_name}')
         
         except ClientError as e:
             print_and_log(logger, 'error', f'Error {e.response['ResponseMetadata']['HTTPStatusCode']}: {e.response['Error']['Code']}')
