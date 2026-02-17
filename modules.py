@@ -1,5 +1,4 @@
 import logging
-import requests
 import json
 
 
@@ -43,7 +42,7 @@ def print_and_log(logger, severity, message):
 
 def write_data_to_file(data, total_results, iteration, logger, timestamp):
         '''
-        Outputs the downloaded data as a JSON file. Prints and logs outcomes and defines the total_results variable, which is used for the download pagination
+        Outputs the downloaded data locally as a JSON file. Prints and logs outcomes
         '''
         #print and log the proportion of results downloaded
         results_downloaded = (5000 * iteration) + 5000

@@ -9,28 +9,23 @@ import sys
 for dir in ['data', 'logs']:
     os.makedirs(dir, exist_ok=True)
 
-#create timestamp for output file names
+#create timestamp for output file names and download parameters
 current_timestamp = datetime.now()
 current_timestamp_str = current_timestamp.strftime('%Y-%m-%d_%H-%M-%S')
 
-#create variables to use for download
+#set variables to use for download
 load_dotenv()
 api_key = os.getenv('api_key')
 url = 'https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/'
 download_date = str(current_timestamp - timedelta(days=1))[:10] #yesterday's date
 
-#set up logging
-logger = modules.make_logger(timestamp=current_timestamp_str)
-
-#the results will be paginated. these variables will account for that pagination
-iteration = 0
-offset = 0
+#set variables for retries and pagination
+max_attempts = 3
+current_attempt = iteration = offset = 0
 total_results = 100000 #setting this arbitrarily at first to make sure at least one download always runs. it'll be overwritten with the true value during the download
 
-#define number of retries (in the event of server errors in the API)
-current_attempt = 0
-max_attempts = 3
-
+#set up logging
+logger = modules.make_logger(timestamp=current_timestamp_str)
 modules.print_and_log(logger, 'info', 'Starting downloads')
 
 #only continue downloading while there are results left to download and the max attempts haven't been reached
@@ -59,7 +54,7 @@ while (offset < total_results) and (current_attempt < max_attempts):
         #write data to file
         modules.write_data_to_file(data, total_results, iteration, logger, current_timestamp_str)
 
-        #increment variables. we'll have to paginate the downloads to get them all since one download is limited to 5000 results
+        #increment variables. we may have to paginate the downloads to get everything since one download is limited to 5000 results
         iteration += 1
         offset += 5000
 
