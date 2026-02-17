@@ -1,0 +1,30 @@
+name: EIA Ingestion
+
+on:
+  schedule:
+    - cron: "10 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: energy_generation_env
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.10"
+
+      - name: Install packages
+        run: pip install -r requirements.txt
+
+      - name: Run Python script
+        env:
+          api_key: ${{secrets.api_key}}
+          aws_access_key: ${{secrets.aws_access_key}}
+          aws_secret_key: ${{secrets.aws_secret_key}}
+          s3_bucket_name: ${{secrets.s3_bucket_name}}
+        run: python main.py
