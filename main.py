@@ -1,7 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 import modules
 import sys
 
@@ -13,13 +13,14 @@ for dir in ['data', 'logs']:
 current_timestamp = datetime.now()
 current_timestamp_str = current_timestamp.strftime('%Y-%m-%d_%H-%M-%S')
 
-#set up logging
-logger = modules.make_logger(timestamp=current_timestamp_str)
-
-#load api key and define url for download
+#create variables to use for download
 load_dotenv()
 api_key = os.getenv('api_key')
 url = 'https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/'
+download_date = str(current_timestamp - timedelta(days=1))[:10] #yesterday's date
+
+#set up logging
+logger = modules.make_logger(timestamp=current_timestamp_str)
 
 #the results will be paginated. these variables will account for that pagination
 iteration = 0
@@ -41,6 +42,8 @@ while (offset < total_results) and (current_attempt < max_attempts):
         'data[0]': 'value',
         'offset': offset,
         'length': 5000,
+        'start': download_date,
+        'end': download_date,
         'facets[respondent][]': 'NY' #filtering to New York only
     }
 
@@ -65,6 +68,9 @@ while (offset < total_results) and (current_attempt < max_attempts):
         modules.print_and_log(logger, 'error', f'HTTP error during download {iteration}: {response.status_code} {e}')
         if response.status_code >= 500:
             current_attempt += 1
+            if current_attempt >= 3:
+                modules.print_and_log(logger, 'error', 'Terminating script')
+                sys.exit()
         else:
             modules.print_and_log(logger, 'error', 'Terminating script')
             sys.exit()
