@@ -41,16 +41,15 @@ def print_and_log(logger, severity, message):
 
 
 
-def write_data_to_file(response, iteration, logger, timestamp):
+def write_data_to_file(data, total_results, iteration, logger, timestamp):
         '''
         Outputs the downloaded data as a JSON file. Prints and logs outcomes and defines the total_results variable, which is used for the download pagination
         '''
-        #error if there's an HTTP error
-        data = response.json()
-
-        #set total_results to its true value. print and log the proportion of results downloaded
-        total_results = int(data['response']['total'])
+        #print and log the proportion of results downloaded
         results_downloaded = (5000 * iteration) + 5000
+        if results_downloaded > total_results:
+            results_downloaded = total_results
+
         print_and_log(logger, 'info', f'Download {iteration} complete. {results_downloaded} out of {total_results} results downloaded')
 
         #write results to file
