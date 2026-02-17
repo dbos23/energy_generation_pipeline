@@ -1,8 +1,6 @@
 import logging
-import json
-
-
-
+from botocore.exceptions import ClientError
+import sys
 
 def make_logger(timestamp):
     '''
@@ -26,15 +24,15 @@ def print_and_log(logger, severity, message):
     Outputs the same message to the terminal and the logs
     '''
     print(message)
-    if severity == 'debug':
+    if severity.lower() == 'debug':
         logger.debug(message)
-    elif severity == 'info':
+    elif severity.lower() == 'info':
         logger.info(message)
-    elif severity == 'warning':
+    elif severity.lower() == 'warning':
         logger.warning(message)
-    elif severity == 'error':
+    elif severity.lower() == 'error':
         logger.error(message)
-    elif severity == 'critical':
+    elif severity.lower() == 'critical':
         logger.critical(message)
 
 
@@ -53,6 +51,15 @@ def upload_to_s3(json_string, total_results, iteration, logger, timestamp, clien
 
         #upload results to s3
         output_file_name = timestamp + '_' + str(iteration) + '.json'
-        client.put_object(Body=json_string, Bucket=s3_bucket_name, Key=output_file_name)
 
-        print_and_log(logger, 'info', f'File {iteration} written to S3 at {s3_bucket_name}/{output_file_name}')
+        try:
+            client.put_object(Body=json_string, Bucket=s3_bucket_name, Key=output_file_name)
+            print_and_log(logger, 'info', f'File {iteration} written to S3 at {s3_bucket_name}/{output_file_name}')
+        
+        except ClientError as e:
+            print_and_log(logger, 'error', f'Error {e.response['ResponseMetadata']['HTTPStatusCode']}: {e.response['Error']['Code']}')
+            sys.exit()
+
+        except Exception as e:
+            print_and_log(logger, 'error', 'Non-client error during S3 upload')
+            sys.exit()

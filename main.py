@@ -5,11 +5,11 @@ from datetime import datetime, timedelta
 import boto3
 import requests
 import json
+import time
 import modules
 
-#create directories for output data and logs if they don't already exist
-for dir in ['data', 'logs']:
-    os.makedirs(dir, exist_ok=True)
+#create directory for logs if it doesn't already exist
+os.makedirs('logs', exist_ok=True)
 
 #create timestamp for output file names and download parameters
 current_timestamp = datetime.now()
@@ -21,7 +21,7 @@ aws_access_key = os.getenv('aws_access_key')
 aws_secret_key = os.getenv('aws_secret_key')
 s3_bucket_name = os.getenv('s3_bucket_name')
 api_key = os.getenv('api_key')
-url = 'https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/'
+url = 'https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/' #api docs: https://www.eia.gov/opendata/documentation.php
 download_date = str(current_timestamp - timedelta(days=1))[:10] #yesterday's date
 
 #set variables for retries and pagination
@@ -62,11 +62,17 @@ while (offset < total_results) and (current_attempt < max_attempts):
         data = response.json()
         json_string = json.dumps(data)
 
-        #set total_results to its true value
+        #set total_results to its true value and upload json data to s3 bucket
         total_results = int(data['response']['total'])
-
-        #upload json data to s3 bucket
-        modules.upload_to_s3(json_string, total_results, iteration, logger, current_timestamp_str, s3_client, s3_bucket_name)
+        modules.upload_to_s3(
+            json_string,
+            total_results,
+            iteration,
+            logger,
+            current_timestamp_str,
+            s3_client,
+            s3_bucket_name
+        )
 
         #increment variables. we may have to paginate the downloads to get everything since one download is limited to 5000 results
         iteration += 1
@@ -75,16 +81,23 @@ while (offset < total_results) and (current_attempt < max_attempts):
     #handle and log HTTP errors
     except requests.exceptions.HTTPError as e:
         modules.print_and_log(logger, 'error', f'HTTP error during download {iteration}: {response.status_code} {e}')
+        
+        #server error. wait 10 seconds then try again up to 3 times
         if response.status_code >= 500:
             current_attempt += 1
             if current_attempt >= 3:
                 modules.print_and_log(logger, 'error', 'Terminating script')
                 sys.exit()
+            else:
+                modules.print_and_log(logger, 'info', 'Retrying download...')
+                time.sleep(10)
+
+        #non-server error. the script terminates so we can fix it
         else:
             modules.print_and_log(logger, 'error', 'Terminating script')
             sys.exit()
 
-    #handle and log any other kinds of errors
+    #handle and log any other kinds of errors and terminate script
     except Exception as e:
         modules.print_and_log(logger, 'error', f'Non-HTTP error during download {iteration}: {e}')
         modules.print_and_log(logger, 'error', 'Terminating script')
