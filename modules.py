@@ -24,15 +24,16 @@ def print_and_log(logger, severity, message):
     Outputs the same message to the terminal and the logs
     '''
     print(message)
-    if severity.lower() == 'debug':
+    severity = severity.lower()
+    if severity == 'debug':
         logger.debug(message)
-    elif severity.lower() == 'info':
+    elif severity == 'info':
         logger.info(message)
-    elif severity.lower() == 'warning':
+    elif severity == 'warning':
         logger.warning(message)
-    elif severity.lower() == 'error':
+    elif severity == 'error':
         logger.error(message)
-    elif severity.lower() == 'critical':
+    elif severity == 'critical':
         logger.critical(message)
 
 
