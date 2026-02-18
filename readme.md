@@ -11,7 +11,7 @@ https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/
 
 ### Directory Structure
 
-```
+```text
 ├── main.py               # Primary execution script
 ├── modules.py            # Functions for logging and S3 upload
 ├── requirements.txt      # Project dependencies
@@ -34,7 +34,7 @@ https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data/data/
 1. **Clone the repository to your local machine**
 2. **Create a virtual environment:**
 
-```Bash
+```bash
 python -m venv .venv
 ```
 
@@ -54,30 +54,30 @@ source .venv/bin/activate
 
 4. **Install the required dependencies:**
 
-```Bash
+```bash
 pip install -r requirements.txt
 ```
 
 5. **Create a .env file with your credentials in the root directory using the template below:**
 
-```
+```text
 api_key= {{ your_eia_api_key_here }}
 aws_access_key= {{ your_aws_access_key_here }}
 aws_secret_key= {{ your_aws_secret_key_here }}
 s3_bucket_name= {{ your_s3_bucket_name_here }}
 ```
 
-6. **Include the same variables as secrets in a GitHub environment (this is an alternative to the local, manual usage of this pipeline; it would allow the automated daily run of main.py on GitHub with a GitHub Action defined in .github/workflows/main.yml)**
+6. **Include those same variables as secrets in a GitHub environment (this is an alternative to the local, manual usage of this pipeline; it would allow the automated daily run of main.py on GitHub with a GitHub Action defined in .github/workflows/main.yml)**
 
 ## Usage
 
 You can run the pipeline manually using the following command:
 
-```Bash
+```bash
 python main.py
 ```
 
-Alternatively, there's a Github Action in .github/workflows/main.yml that's set up to run the pipeline automatically each day at 4:10pm UTC (in order to give the API time to have the prior day's data complete)
+Alternatively, there's a Github Action in .github/workflows/main.yml that's set up to run the pipeline automatically each day at 4:10pm UTC (in order to give the API time to have the prior day's data complete). This will only work if the necessary secrets have been added to a GitHub environment (see the installation and setup section above)
 
 ## What it does:
 
