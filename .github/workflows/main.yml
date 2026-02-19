@@ -2,8 +2,8 @@ name: EIA Ingestion
 
 on:
   schedule:
-    #runs every day at 4:10pm UTC / 11:10am Eastern
-    - cron: "10 16 * * *"
+    #runs every day at 3:10pm (in the time zone where this is hosted) / 11:10am Eastern
+    - cron: "10 15 * * *"
   workflow_dispatch:
 
 jobs:
