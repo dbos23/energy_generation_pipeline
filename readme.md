@@ -125,7 +125,7 @@ Creates the raw and fact tables (bronze and silver layers). Creates a stream tha
 
 #### Stored procedure and task setup
 
-Creates a stored procedure to refresh all the tables. Creates a task to automate the daily run of the Snowflake portion of the pipeline
+Creates a task to automate the daily ingestion of data from S3 into the raw table. Creates a stored procedure to refresh the subsequent tables. Creates a task to run the stored procedure after ingesting the data from S3
 
 ## The key files
 
