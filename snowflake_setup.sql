@@ -1,5 +1,6 @@
 use schema {{ schema }};
 
+--------------------
 --set up stage
 
 
@@ -64,6 +65,38 @@ create table fct_energy_outputs (
 
 
 --------------------
+--automate ingestion of files from S3 to raw table
+
+
+--create task to read files from stage and copy their data into the raw table
+create or replace task ingest_eia_files
+warehouse = dataschool_wh
+schedule = 'using cron 25 16 * * * UTC' --runs at 4:25pm UTC / 11:25am Eastern
+as
+    --insert new files from stage into raw table
+    copy into eia_raw
+    from (
+        select
+            $1,
+            metadata$filename
+        from @energy_generation
+    )
+    file_format = (
+        type = 'JSON',
+        strip_outer_array = true
+);
+
+--activate task
+alter task ingest_eia_files resume;
+
+
+
+
+
+--------------------
+--atuomate the refresh of fct_energy_outputs and monthly_energy_generation
+
+
 --create stored procedure to refresh all tables
 create or replace procedure refresh_eia()
 returns varchar
@@ -71,21 +104,6 @@ language sql
 as
 $$
 begin
-
---------------------
-
---insert new files from stage into raw table
-copy into eia_raw
-from (
-    select
-        $1,
-        metadata$filename
-    from @energy_generation
-)
-file_format = (
-    type = 'JSON',
-    strip_outer_array = true
-);
 
 --------------------
 
@@ -127,12 +145,10 @@ return 'All tables updated';
 end;
 $$;
 
-
-
---create task to run the stored procedure at 11:25am every day (but only if the stream has data)
+--create task to run the stored procedure after the files have been ingested into the raw table (checking if the stream has data so as not to run unnecessarily)
 create or replace task run_eia_pipeline
 warehouse = {{ warehouse }}
-schedule = 'using cron 25 16 * * * UTC' --runs at 4:25pm UTC / 11:25am Eastern
+after ingest_eia_files
 when system$stream_has_data('eia_stream')
 as
 call refresh_eia()
